@@ -1,0 +1,343 @@
+﻿@using WebMatrix.WebData
+
+@* Remove this section if you are using bundling *@
+@section Scripts {
+    <script src="~/Scripts/jquery.validate.min.js"></script>
+    <script src="~/Scripts/jquery.validate.unobtrusive.min.js"></script>
+}
+
+@{
+    WebSecurity.RequireAuthenticatedUser();
+
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Manage Account";
+
+    var action = Request.Form["action"];
+
+    bool hasLocalAccount = OAuthWebSecurity.HasLocalAccount(WebSecurity.CurrentUserId);
+
+    string successMessage = "";
+    var message = Request.QueryString["message"];
+    if (message == "ChangedPassword")
+    {
+        successMessage = "Your password has been changed.";
+    }
+    else if (message == "SetPassword")
+    {
+        successMessage = "Your password has been set.";
+    }
+    else if (message == "RemovedLogin")
+    {
+        successMessage = "The external login was removed.";
+    }
+
+    var externalLogins =
+        (from account in OAuthWebSecurity.GetAccountsFromUserName(WebSecurity.CurrentUserName)
+         let clientData = OAuthWebSecurity.GetOAuthClientData(account.Provider)
+         select new { Provider = account.Provider, ProviderDisplayName = clientData.DisplayName, UserId = account.ProviderUserId })
+        .ToList();
+    bool canRemoveLogin = externalLogins.Count > 1 || hasLocalAccount;
+
+    // Setup validation
+    if (hasLocalAccount)
+    {
+        Validation.RequireField("currentPassword", "The current password field is required.");
+        Validation.Add("currentPassword",
+            Validator.StringLength(
+                maxLength: Int32.MaxValue,
+                minLength: 6,
+                errorMessage: "Current password must be at least 6 characters"));
+    }
+    Validation.RequireField("newPassword", "The new password field is required.");
+    Validation.Add("confirmPassword",
+        Validator.Required("The confirm new password field is required."),
+        Validator.EqualsTo("newPassword", "The new password and confirmation password do not match."));
+    Validation.Add("newPassword",
+        Validator.StringLength(
+            maxLength: Int32.MaxValue,
+            minLength: 6,
+            errorMessage: "New password must be at least 6 characters"));
+
+    if (IsPost)
+    {
+        AntiForgery.Validate();
+        if (action == "password")
+        {
+            // Handle local account password operations
+            var currentPassword = Request.Form["currentPassword"];
+            var newPassword = Request.Form["newPassword"];
+            var confirmPassword = Request.Form["confirmPassword"];
+
+            if (Validation.IsValid())
+            {
+                if (hasLocalAccount)
+                {
+                    if (WebSecurity.ChangePassword(WebSecurity.CurrentUserName, currentPassword, newPassword))
+                    {
+                        Response.Redirect("~/Account/Manage?message=ChangedPassword");
+                        return;
+                    }
+                    else
+                    {
+                        ModelState.AddFormError("An error occurred when attempting to change the password. Please contact the site owner.");
+                    }
+                }
+                else
+                {
+                    bool requireEmailConfirmation = !WebMail.SmtpServer.IsEmpty();
+                    try
+                    {
+                        WebSecurity.CreateAccount(WebSecurity.CurrentUserName, newPassword, requireEmailConfirmation);
+                        Response.Redirect("~/Account/Manage?message=SetPassword");
+                        return;
+                    }
+                    catch (System.Web.Security.MembershipCreateUserException e)
+                    {
+                        ModelState.AddFormError(e.Message);
+                    }
+                }
+            }
+            else
+            {
+                ModelState.AddFormError("Password change was unsuccessful. Please correct the errors and try again.");
+            }
+        }
+        else if (action == "removeLogin")
+        {
+            // Remove external login
+            var provider = Request.Form["provider"];
+            var userId = Request.Form["userId"];
+
+            message = null;
+            var ownerAccount = OAuthWebSecurity.GetUserName(provider, userId);
+            // Only remove the external login if it is owned by the currently logged in user and it is not the users last login credential
+            if (ownerAccount == WebSecurity.CurrentUserName && canRemoveLogin)
+            {
+                OAuthWebSecurity.DeleteAccount(provider, userId);
+                message = "RemovedLogin";
+            }
+            Response.Redirect(Href("~/Account/Manage", new { message }));
+            return;
+        }
+        else
+        {
+            // Assume this an external login request
+            string provider = Request.Form["provider"];
+            if (!provider.IsEmpty())
+            {
+                OAuthWebSecurity.RequestAuthentication(provider, Href("~/Account/RegisterService", new { returnUrl = Href("~/Account/Manage") }));
+                return;
+            }
+        }
+    }
+}
+<hgroup class="title">
+    <h1>@Page.Title.</h1>
+</hgroup>
+
+@if (!successMessage.IsEmpty())
+{
+    <p class="message-success">
+        @successMessage
+    </p>
+}
+<section id="info">
+    <div class="grid">
+        <div class="col-md-9">
+            <p class="logged-in-as">You're logged in as <strong>@WebSecurity.CurrentUserName</strong>.</p>
+        </div>
+        <div class="col-md=3">
+            <img class="round pull-right" src="~/Images/default-thumbnail.jpg" width="200px" />
+
+        </div>
+
+    </div>
+    <ul class="nav nav-tabs">
+        <li class="active"><a data-toggle="tab" href="#home">Listings</a></li>
+        <li><a data-toggle="tab" href="#menu1">Account</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="home" class="tab-pane fade in active">
+            <h3>Listings</h3>
+            <section id="current-listings" class="grid">
+                <div class="col-md-12">
+                    <h2 class="current-auctions--font-size">Current auctions:</h2>
+
+                    <ol class="round">
+                        <li class="one">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction one</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        In efficitur venenatis dolor et tempus. Phasellus condimentum erat arcu,
+                                        vitae tempus quam euismod eget. Cras ut justo sit amet ligula accumsan sollicitudin a eget dolor.
+                                        Ut feugiat, ligula sit amet pretium vulputate, odio eros vulputate mi, non aliquam nulla nisi non ligula. Nullam finibus
+                                        risus turpis, vitae gravida sem varius in<a class="more-auction-info_href" href="">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="two">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction two</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        Nam risus velit, pharetra in mauris ut, aliquam suscipit justo.
+                                        Quisque eget ultricies tellus. Donec ultricies euismod diam, vitae vulputate justo ultrices sit amet.
+                                        Nam ut semper orci. Suspendisse ut tortor vulputate, pellentesque nulla eget, cursus arcu. Proin a iaculis ipsum. Donec eros quam,
+                                        placerat eu velit in, condimentum scelerisque lacus.<a class="more-auction-info_href" href="">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="three">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction three</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        Donec sollicitudin sem ut nunc placerat, quis euismod augue eleifend. Sed faucibus finibus felis, sed eleifend nunc.
+                                        Vestibulum at nisi sodales diam aliquet vulputate a id erat. Sed feugiat rhoncus purus. Fusce vitae ex orci.
+                                        Maecenas odio metus, pharetra a vehicula ut, semper et odio.<a href="" class="more-auction-info_href">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+
+            <section id="current-bids" class="grid">
+                <div class="col-md-12">
+                    <h2 class="current-bids--font-size">Current bids:</h2>
+
+                    <ol class="round">
+                        <li class="one">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction one</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        In efficitur venenatis dolor et tempus. Phasellus condimentum erat arcu,
+                                        vitae tempus quam euismod eget. Cras ut justo sit amet ligula accumsan sollicitudin a eget dolor.
+                                        Ut feugiat, ligula sit amet pretium vulputate, odio eros vulputate mi, non aliquam nulla nisi non ligula. Nullam finibus
+                                        risus turpis, vitae gravida sem varius in<a class="more-auction-info_href" href="">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="two">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction two</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        Nam risus velit, pharetra in mauris ut, aliquam suscipit justo.
+                                        Quisque eget ultricies tellus. Donec ultricies euismod diam, vitae vulputate justo ultrices sit amet.
+                                        Nam ut semper orci. Suspendisse ut tortor vulputate, pellentesque nulla eget, cursus arcu. Proin a iaculis ipsum. Donec eros quam,
+                                        placerat eu velit in, condimentum scelerisque lacus.<a class="more-auction-info_href" href="">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+
+                        <li class="three">
+                            <div class="grid">
+                                <h4 class="col-md-12">Auction three</h4>
+                                <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                                <div class="col-md-9">
+                                    <p>
+                                        Donec sollicitudin sem ut nunc placerat, quis euismod augue eleifend. Sed faucibus finibus felis, sed eleifend nunc.
+                                        Vestibulum at nisi sodales diam aliquet vulputate a id erat. Sed feugiat rhoncus purus. Fusce vitae ex orci.
+                                        Maecenas odio metus, pharetra a vehicula ut, semper et odio.<a href="" class="more-auction-info_href">...</a>
+                                    </p>
+                                </div>
+                            </div>
+                        </li>
+                    </ol>
+                </div>
+            </section>
+
+
+        </div>
+        <div id="menu1" class="tab-pane fade">
+            <h3>Account management</h3>
+            <div class="col-md-12">
+                <section class="grid">
+                    <div class="content-wrapper">
+
+                    </div>
+                    <div id="acccount-management" class="col-m-12">
+                        @if (hasLocalAccount)
+                        {
+                            <h3>Change password</h3>
+                        }
+                        else
+                        {
+                            <p>
+                                You do not have a local password for this site. Add a local password so you can log in without an external login.
+                            </p>
+                        }
+
+                        <form method="post">
+                            @AntiForgery.GetHtml()
+                            @Html.ValidationSummary(excludeFieldErrors: true)
+
+                            <fieldset>
+                                <legend>
+                                    @if (hasLocalAccount)
+                                    {
+                                        <text>Change Password Form</text>
+                                    }
+                                    else
+                                    {
+                                        <text>Set Password Form</text>
+                                    }
+                                </legend>
+                                <ol>
+                                    @if (hasLocalAccount)
+                                    {
+                                        <li class="current-password">
+                                            <label for="currentPassword" @if (!ModelState.IsValidField("currentPassword")) { <text> class="error-label" </text>         }>Current password</label>
+                                            <input type="password" id="currentPassword" name="currentPassword" @Validation.For("currentPassword") />
+                                            @Html.ValidationMessage("currentPassword")
+                                        </li>
+                                    }
+                                    <li class="new-password">
+                                        <label for="newPassword" @if (!ModelState.IsValidField("newPassword")) { <text> class="error-label" </text>         }>New password</label>
+                                        <input type="password" id="newPassword" name="newPassword" @Validation.For("newPassword") />
+                                        @Html.ValidationMessage("newPassword")
+                                    </li>
+                                    <li class="confirm-password">
+                                        <label for="confirmPassword" @if (!ModelState.IsValidField("confirmPassword")) { <text> class="error-label" </text>         }>Confirm new password</label>
+                                        <input type="password" id="confirmPassword" name="confirmPassword" @Validation.For("confirmPassword") />
+                                        @Html.ValidationMessage("confirmPassword")
+                                    </li>
+                                </ol>
+                                @if (hasLocalAccount)
+                                {
+                                    <button type="submit" name="action" value="password">Change Password</button>
+                                    <p>
+                                        Click <a href="~/Account/ForgotPassword" title="Forgot password page">here</a> if you've forgotten your password.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <button type="submit" name="action" value="password">Set Password</button>
+                                }
+                            </fieldset>
+                        </form>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+    </div>
+</section>

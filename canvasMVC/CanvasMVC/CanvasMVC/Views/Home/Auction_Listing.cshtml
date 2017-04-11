@@ -1,0 +1,127 @@
+﻿@{
+    Layout = "~/_SiteLayout.cshtml";
+    Page.Title = "Auction listings";
+}
+
+<hgroup class="title">
+    <h1>@Page.Title.</h1>
+    <h2>Showing current listings</h2>
+</hgroup>
+
+
+<section id="auctions" class="grid">
+    <div class="col-md-3">
+        <form class="navbar-form navbar-left pull-right">
+            <div class="form-group">
+                <input type="text" class="form-control" placeholder="Search">
+            </div>
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+        <div class="panel panel-default grid">
+            <div class="panel-heading">Filter options</div>
+            <div class="col-md-9">
+                
+            </div>
+            <div >
+                <div class="panel-body options_padding"><p><input type="checkbox" value="Option 1" /> &nbsp; &nbsp;Option 1</p></div>
+                <div class="panel-body options_padding"><p><input type="checkbox" value="Option 1" /> &nbsp; &nbsp;Option 2</p></div>
+                <div class="panel-body options_padding"><p><input type="checkbox" value="Option 1" /> &nbsp; &nbsp;Option 3</p></div>
+                <div class="panel-body options_padding"><p><input type="checkbox" value="Option 1" /> &nbsp; &nbsp;Option 4</p></div>
+            </div>
+        </div>
+
+
+    </div>
+    <div class="col-md-9">
+        <h2 class="all-auctions--font-size">Recent auctions:</h2>
+
+        <ol class="round">
+            <li class="one">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction one</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            In efficitur venenatis dolor et tempus. Phasellus condimentum erat arcu,
+                            vitae tempus quam euismod eget. Cras ut justo sit amet ligula accumsan sollicitudin a eget dolor.
+                            Ut feugiat, ligula sit amet pretium vulputate, odio eros vulputate mi, non aliquam nulla nisi non ligula. Nullam finibus
+                            risus turpis, vitae gravida sem varius in<a class="more-auction-info_href" href="">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+
+            <li class="two">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction two</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            Nam risus velit, pharetra in mauris ut, aliquam suscipit justo.
+                            Quisque eget ultricies tellus. Donec ultricies euismod diam, vitae vulputate justo ultrices sit amet.
+                            Nam ut semper orci. Suspendisse ut tortor vulputate, pellentesque nulla eget, cursus arcu. Proin a iaculis ipsum. Donec eros quam,
+                            placerat eu velit in, condimentum scelerisque lacus.<a class="more-auction-info_href" href="">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+
+            <li class="three">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction three</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            Donec sollicitudin sem ut nunc placerat, quis euismod augue eleifend. Sed faucibus finibus felis, sed eleifend nunc.
+                            Vestibulum at nisi sodales diam aliquet vulputate a id erat. Sed feugiat rhoncus purus. Fusce vitae ex orci.
+                            Maecenas odio metus, pharetra a vehicula ut, semper et odio.<a href="" class="more-auction-info_href">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+            <li class="four">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction four</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            In efficitur venenatis dolor et tempus. Phasellus condimentum erat arcu,
+                            vitae tempus quam euismod eget. Cras ut justo sit amet ligula accumsan sollicitudin a eget dolor.
+                            Ut feugiat, ligula sit amet pretium vulputate, odio eros vulputate mi, non aliquam nulla nisi non ligula. Nullam finibus
+                            risus turpis, vitae gravida sem varius in<a class="more-auction-info_href" href="">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+
+            <li class="five">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction five</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            Nam risus velit, pharetra in mauris ut, aliquam suscipit justo.
+                            Quisque eget ultricies tellus. Donec ultricies euismod diam, vitae vulputate justo ultrices sit amet.
+                            Nam ut semper orci. Suspendisse ut tortor vulputate, pellentesque nulla eget, cursus arcu. Proin a iaculis ipsum. Donec eros quam,
+                            placerat eu velit in, condimentum scelerisque lacus.<a class="more-auction-info_href" href="">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+
+            <li class="six">
+                <div class="grid">
+                    <h4 class="col-md-12">Auction six</h4>
+                    <div class="col-md-2"><img src="~/Images/default-thumbnail.jpg" class="img-rounded" width="100px" /> </div>
+                    <div class="col-md-9">
+                        <p>
+                            Donec sollicitudin sem ut nunc placerat, quis euismod augue eleifend. Sed faucibus finibus felis, sed eleifend nunc.
+                            Vestibulum at nisi sodales diam aliquet vulputate a id erat. Sed feugiat rhoncus purus. Fusce vitae ex orci.
+                            Maecenas odio metus, pharetra a vehicula ut, semper et odio.<a href="" class="more-auction-info_href">...</a>
+                        </p>
+                    </div>
+                </div>
+            </li>
+        </ol>
+    </div>
+</section>

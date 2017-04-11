@@ -1,0 +1,29 @@
+﻿@using Microsoft.AspNet.Identity
+@using System.Security.Claims
+@using System.Threading
+@if (Request.IsAuthenticated)
+{
+    using (Html.BeginForm("LogOff", "Account", FormMethod.Post, new { id = "logoutForm", @class = "navbar-right" }))
+    {
+        @Html.AntiForgeryToken()
+
+        <ul class="nav navbar-nav navbar-right">
+            <li>
+                @{
+        var prinicpal = (ClaimsPrincipal)Thread.CurrentPrincipal;
+        var userId = prinicpal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).Select(c => c.Value).SingleOrDefault();
+
+            @Html.ActionLink("Hello " + User.Identity.GetUserName() + "!", "Detail", "User", new { id = Convert.ToInt32(userId) }, null);
+                }
+            </li>
+            <li><a href="javascript:document.getElementById('logoutForm').submit()"><span class="glyphicon glyphicon-log-out"></span> Log out</a></li>
+        </ul>
+    }
+}
+else
+{
+    <ul class="nav navbar-nav navbar-right">
+            <li>@Html.ActionLink("Register", "Register", "Account", routeValues: null, htmlAttributes: new { id = "registerLink" })</li>
+            <li><a href="@Url.Action("Login", "Account")" id="loginLink"><span class="glyphicon glyphicon-log-in"></span> Log in</a>
+        </ul>
+}

@@ -1,0 +1,533 @@
+﻿@using Microsoft.AspNet.Identity
+@using System.Security.Claims
+@using System.Threading
+
+@model AuctionDTOs.UserDetailDTO
+@{
+    ViewBag.Title = "Profile";
+}
+
+@{
+    var prinicpal = (ClaimsPrincipal)Thread.CurrentPrincipal;
+    var userId = prinicpal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).Select(c => c.Value).SingleOrDefault();
+
+    if (Request.IsAuthenticated && Model.Id == Convert.ToInt32(userId))
+    {
+        <h2>Your Profile</h2>
+    }
+    else
+    {
+        <h2>@Model.Username's Profile</h2>
+    }
+    <hr />
+
+    if (!Html.ViewData.ModelState.IsValid)
+    {
+        <div class="alert alert-danger alert-dismissable">
+            <a href="#" class="close" data-dismiss="alert" aria-label="close">×</a>
+            <strong>Error!</strong> @Html.ValidationSummary("", new { @class = "text-danger" })
+        </div>    
+    }
+    
+    if (TempData["EmailError"] != null)
+    {
+        if (TempData["EmailError"].ToString() == "true")
+        {
+            <div class="row">
+                <div class="alert alert-danger alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Error!</strong> An account is already registered to that E-mail address.
+                </div>
+            </div>
+        }
+    }
+
+    if (Model.Id == Convert.ToInt32(userId))
+    {
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#listings">Listings <span class="badge">@Model.Listings.Count</span></a></li>
+            <li><a data-toggle="tab" href="#bids">Bids <span class="badge">@Model.Bids.Where(b => b.Dismissed == false).GroupBy(r => r.Listing.Id).Count()</span></a></li>
+            <li><a data-toggle="tab" href="#bidhistory">Bid History</a></li>
+            <li><a data-toggle="tab" href="#edituser">Manage Account</a></li>
+            <li><a data-toggle="tab" href="#edituserpassword">Manage Password</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div id="edituser" class="tab-pane fade">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Update Your Details</h4>
+                    </div>
+                    <div class="panel-body">
+                        @if (Model.AvatarImage == null)
+                    {
+                            @Html.Partial("_EditUserPartial", new AuctionDTOs.UserEditDTO { Id = Model.Id, EmailAddress = Model.EmailAddress, Address = Model.Address, Username = Model.Username, AvatarImage = new AuctionDTOs.AvatarImageDTO() { Id = 0 } })
+                    }
+                    else
+                    {
+                            @Html.Partial("_EditUserPartial", new AuctionDTOs.UserEditDTO { Id = Model.Id, EmailAddress = Model.EmailAddress, Address = Model.Address, Username = Model.Username, AvatarImage = new AuctionDTOs.AvatarImageDTO() { Id = Model.AvatarImage.Id } })
+                    }
+                    </div>
+                </div>
+            </div>
+            <div id="edituserpassword" class="tab-pane fade">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Update Your Password</h4>
+                    </div>
+                    <div class="panel-body">
+                        @Html.Partial("_EditUserPasswordPartial", new AuctionDTOs.UserEditPasswordDTO { Id = Model.Id, NewPassword = "", OldPassword = "", ConfirmNewPassword = "", Username = Model.Username })
+                    </div>
+                </div>
+            </div>
+            <div id="bids" class="tab-pane fade in">
+                @if (Model.Bids.Where(b => b.Dismissed == false).Count() == 0)
+                {
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Your Bids <span class="badge">@Model.Bids.Where(b => b.Dismissed == false).GroupBy(r => r.Listing.Id).Count()</span></h4>
+                    </div>
+                    <div class="panel-body">
+                        <div class="media well">
+                            You have made no bids.
+                        </div>
+                    </div>
+                </div>
+                }
+                else
+                {
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4>Your Bids <span class="badge">@Model.Bids.Where(b => b.Dismissed == false).GroupBy(r => r.Listing.Id).Count()</span></h4>
+                    </div>
+                    <div class="panel-body">
+                        <div id="YourBids">
+                            @Html.Partial("_YourBids", Model.Bids.Where(b => b.Dismissed == false))
+                        </div>                                                                    
+                    </div>
+                </div>                
+                }
+            </div> 
+            <div id="bidhistory" class="tab-pane fade in">
+                @if (Model.Bids.Where(b => b.Dismissed == true).Count() == 0)
+                {
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Your Bid History <span class="badge">@Model.Bids.Where(b => b.Dismissed == true).GroupBy(r => r.Listing.Id).Count()</span></h4>
+                        </div>
+                        <div class="panel-body">
+                            <div class="media well">
+                                You have not bidded on any currently finished auctions.
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            <h4>Your Bid History <span class="badge">@Model.Bids.Where(b => b.Dismissed == true).GroupBy(r => r.Listing.Id).Count()</span></h4>
+                        </div>
+                        <div class="panel-body">
+                            <div id="YourBids">
+                                @Html.Partial("_BidHistory", Model.Bids.Where(b => b.Dismissed == true))
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>                
+            <div id="listings" class="tab-pane fade in active">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        @if (Request.IsAuthenticated && Model.Id == Convert.ToInt32(userId))
+                        {
+                            <h4>Your Listings <span class="badge">@Model.Listings.Count</span></h4>
+                        }
+                        else
+                        {
+                            <h4>@Model.Username's Listings <span class="badge">@Model.Listings.Count</span></h4>
+                        }
+                    </div>
+                    <div class="panel-body">
+                        @if (Request.IsAuthenticated && Model.Id == Convert.ToInt32(userId))
+                        {
+                            <p>@Html.ActionLink("Create New Listing", "NewListing", "Listing", null, new { @class = "btn btn-xs btn-success" })</p>
+                        }
+                        @if (Model.Listings.Count > 0)
+                        {
+                            foreach (var i in Model.Listings)
+                            {
+                                <div class="media well">
+                                    <div class="container">
+                                        <div class="row">
+                                            <div class="col-md-2" style="height:150px;">
+                                                <img src="@i.ImageUrl" width="150" height="150" class="img-thumbnail" style="height:inherit;" />
+                                            </div>
+                                            <div class="col-md-10">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h3>@Html.ActionLink(i.ItemName, "Detail", "Listing", new { id = i.Id }, null)</h3>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <b>Seller: @Html.ActionLink(i.User.Username, "Detail", "User", new { id = i.User.Id }, null)</b>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <b>Quantity:</b> @i.Quantity
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        @if (i.Bids.Count > 0)
+                                                        {
+                                                            <p><b>Current Bid:</b> £@i.Bids.Max(b => b.BidAmount)</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p><b>Starting Price:</b> £@i.Price</p>
+                                                        }
+                                                    </div>
+                                                    <div class="col-md-3">
+
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            @i.DescriptionAbstract
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            @if (i.AuctionEndTime < System.DateTime.Now)
+                                                            {
+                                                                <b style="color:red;">Auction has ended!</b>
+                                                                if (Model.Id == Convert.ToInt32(userId))
+                                                                {
+                                                                    if (i.Bids.Count > 0)
+                                                                    {
+                                                                        var winner = i.Bids.Where(b => b.BidAmount == i.Bids.Max(max => max.BidAmount)).Select(b => b.User).FirstOrDefault();
+
+                                                                        <p><b>Winner:</b> @winner.Username (@Html.ActionLink("View Contact Details", "Detail", "User", new { id = winner.Id }, null))</p>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <p><b>Unsold</b></p>
+                                                                    }
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <p><b>Time Remaining:</b> @i.AuctionEndTime.Subtract(System.DateTime.Now).Days d @i.AuctionEndTime.Subtract(System.DateTime.Now).Hours hr @i.AuctionEndTime.Subtract(System.DateTime.Now).Minutes min</p>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-8">
+
+                                                    </div>
+                                                    @if (Model.Id == Convert.ToInt32(userId))
+                                                    {
+                                                        if (i.AuctionEndTime < System.DateTime.Now)
+                                                        {
+                                                            <div class="col-md-1">
+                                                                <p>@Html.ActionLink("Relist", "NewListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-xs btn-warning" })</p>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <input type="submit" id="remove-button" value="Remove" class="btn btn-xs btn-danger" data-toggle="modal" data-target="#removeModalEnd" />
+                                                            </div>
+
+                                                            <div id="removeModalEnd" class="modal fade" role="dialog">
+                                                                <div class="modal-dialog">
+                                                                    <div class="modal-content">
+                                                                        <div class="modal-header">
+                                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                            <h4 class="modal-title">Remove Listing</h4>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            Are you sure you want to remove this listing? <strong>This cannot be reversed!</strong><br />
+                                                                            Please make sure that you have contacted the winner before removing.
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            @Html.ActionLink("Remove", "RemoveListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-danger" })
+                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                        }
+                                                        else
+                                                        {
+                                                            <div class="col-md-1">
+                                                                <p>@Html.ActionLink("Edit Listing", "EditListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-xs btn-warning" })</p>
+                                                            </div>
+                                                            <div class="col-md-1">
+                                                                <input type="submit" id="remove-button" value="Remove" class="btn btn-xs btn-danger" data-toggle="modal" data-target="#removeModal" />
+                                                            </div>
+
+                                                            <div id="removeModal" class="modal fade" role="dialog">
+                                                                <div class="modal-dialog">
+                                                                    <div class="modal-content">
+                                                                        <div class="modal-header">
+                                                                            <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                            <h4 class="modal-title">Remove Listing</h4>
+                                                                        </div>
+                                                                        <div class="modal-body">
+                                                                            Are you sure you want to remove this listing? <strong>This cannot be reversed!</strong><br />
+                                                                            All current bids and comments will be lost.
+                                                                        </div>
+                                                                        <div class="modal-footer">
+                                                                            @Html.ActionLink("Remove", "RemoveListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-danger" })
+                                                                            <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        }
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="media well">
+                                <p>@Model.Username has no listings.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div> <!-- Profile tab end div -->
+        </div> <!-- Tab Content tab end div -->
+    }
+    else
+    {
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <h4> @Model.Username's Contact Details </h4>
+            </div>
+            <div class="panel-body">
+
+                @if (Model.AvatarImage == null)
+                {
+
+                }
+                else
+                {
+                    if (Model.AvatarImage.Id > 0)
+                    {
+                        <div class="row">
+                            <label class="col-md-2 control-label">Profile Picture</label>
+                            <div class="col-md-10">
+                                <img src="@Html.Raw(Url.Action("GetImg", "User", new { id = Model.AvatarImage.Id }))" width="100" height="100" class="img-thumbnail img-rounded" />
+                            </div>
+                        </div>
+                    }
+                }
+
+                <div class="row">
+                    @Html.LabelFor(m => m.EmailAddress, new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.ValueFor(m => m.EmailAddress)
+                    </div>
+                </div>
+                <div class="row">
+                    @Html.LabelFor(m => m.Address, new { @class = "col-md-2 control-label" })
+                    <div class="col-md-10">
+                        @Html.ValueFor(m => m.Address)
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            @if (Request.IsAuthenticated && Model.Id == Convert.ToInt32(userId))
+            {
+                <h4>Your Listings <span class="badge">@Model.Listings.Count</span></h4>
+            }
+            else
+            {
+                <h4>@Model.Username's Listings <span class="badge">@Model.Listings.Count</span></h4>
+            }
+        </div>
+        <div class="panel-body">
+            @if (Request.IsAuthenticated && Model.Id == Convert.ToInt32(userId))
+            {
+                <p>@Html.ActionLink("Create New Listing", "NewListing", "Listing", new { listingId = 0 }, new { @class = "btn btn-xs btn-success" })</p>
+            }
+            @if (Model.Listings.Count > 0)
+            {
+                foreach (var i in Model.Listings)
+                {
+                    <div class="media well">
+                        <div class="container">
+                            <div class="row">
+                                <div class="col-md-2" style="height:150px;">
+                                    <img src="@i.ImageUrl" width="150" height="150" class="img-thumbnail" style="height:inherit;" />
+                                </div>
+                                <div class="col-md-10">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <h3>@Html.ActionLink(i.ItemName, "Detail", "Listing", new { id = i.Id }, null)</h3>
+                                        </div>
+                                        <div class="col-md-6">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <b>Seller: @Html.ActionLink(i.User.Username, "Detail", "User", new { id = i.User.Id }, null)</b>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <b>Quantity:</b> @i.Quantity
+                                        </div>
+                                        <div class="col-md-3">
+                                            @if (i.Bids.Count > 0)
+                                            {
+                                                <p><b>Current Bid:</b> £@i.Bids.Max(b => b.BidAmount)</p>
+                                            }
+                                            else
+                                            {
+                                                <p><b>Starting Price:</b> £@i.Price</p>
+                                            }
+                                        </div>
+                                        <div class="col-md-3">
+
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                @i.DescriptionAbstract
+                                            </div>
+                                            <div class="col-md-6">
+                                                @if (i.AuctionEndTime < System.DateTime.Now)
+                                                {
+                                                    <b style="color:red;">Auction has ended!</b>
+                                                    if (Model.Id == Convert.ToInt32(userId))
+                                                    {
+                                                        if (i.Bids.Count > 0)
+                                                        {
+                                                            var winner = i.Bids.Where(b => b.BidAmount == i.Bids.Max(max => max.BidAmount)).Select(b => b.User).FirstOrDefault();
+
+                                                            <p><b>Winner:</b> @winner.Username (@Html.ActionLink("View Contact Details", "Detail", "User", new { id = winner.Id }, null))</p>
+                                                        }
+                                                        else
+                                                        {
+                                                            <p><b>Unsold</b></p>
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <p><b>Time Remaining:</b> @i.AuctionEndTime.Subtract(System.DateTime.Now).Days d @i.AuctionEndTime.Subtract(System.DateTime.Now).Hours hr @i.AuctionEndTime.Subtract(System.DateTime.Now).Minutes min</p>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-8">
+
+                                        </div>
+                                        @if (Model.Id == Convert.ToInt32(userId))
+                                        {
+                                            if (i.AuctionEndTime < System.DateTime.Now)
+                                            {
+                                                <div class="col-md-1">
+                                                    <p>@Html.ActionLink("Relist", "NewListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-xs btn-warning" })</p>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <input type="submit" id="remove-button" value="Remove" class="btn btn-xs btn-danger" data-toggle="modal" data-target="#removeModalEnd" />                                                    
+                                                </div>
+
+                                                <div id="removeModalEnd" class="modal fade" role="dialog">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                <h4 class="modal-title">Remove Listing</h4>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                Are you sure you want to remove this listing? <strong>This cannot be reversed!</strong>
+                                                                Please make sure that you have contacted the winner before removing.
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <p>@Html.ActionLink("Remove", "RemoveListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-danger" })</p>
+                                                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            }
+                                            else
+                                            {
+                                                <div class="col-md-1">
+                                                    <p>@Html.ActionLink("Edit Listing", "EditListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-xs btn-warning" })</p>
+                                                </div>
+                                                <div class="col-md-1">
+                                                    <input type="submit" id="remove-button" value="Remove" class="btn btn-xs btn-danger" data-toggle="modal" data-target="#removeModal" />                                                    
+                                                </div>
+
+                                                <div id="removeModal" class="modal fade" role="dialog">
+                                                    <div class="modal-dialog">
+                                                        <div class="modal-content">
+                                                            <div class="modal-header">
+                                                                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                                <h4 class="modal-title">Remove Listing</h4>
+                                                            </div>
+                                                            <div class="modal-body">
+                                                                Are you sure you want to remove this listing? <strong>This cannot be reversed!</strong>
+                                                                All current bids and comments will be lost.
+                                                            </div>
+                                                            <div class="modal-footer">
+                                                                <p>@Html.ActionLink("Remove", "RemoveListing", "Listing", new { listingId = i.Id }, new { @class = "btn btn-danger" })</p>
+                                                                <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="media well">
+                    <p>@Model.Username has no listings.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    }
+}
+
+@section scripts{
+    <script type="text/javascript">
+        $(document).ready(function () {            
+            $('.BidRow').each(function () {
+                if ($('.result b', this).hasClass('Won')) {
+                    $(this).removeClass('alert-info');
+                    $(this).addClass('alert-success alert-dismissable fade in');
+                }
+                if ($('.result b', this).hasClass('Lost')) {
+                    $(this).removeClass('alert-info');
+                    $(this).addClass('alert-danger alert-dismissable fade in');
+                }
+            });
+        });
+
+        function navigate(target, id, listingId, userId) {
+            $.post(target, { Id: id, ListingId: listingId, UserId: userId });
+        }
+</script>
+}
+
+ 

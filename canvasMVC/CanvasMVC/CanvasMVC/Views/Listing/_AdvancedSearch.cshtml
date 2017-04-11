@@ -1,0 +1,73 @@
+﻿@model IEnumerable<AuctionDTOs.ProductCategoryDTO>
+
+@using (Html.BeginForm("AdvancedSearch", "Listing", FormMethod.Get, new { @class = "form-horizontal", @role = "form" }))
+{
+    <div class="row" id="custom-search-input">
+        <div class="input-group col-md-12" style="margin-bottom:10px;">
+            <input type="text" class="form-control input-sm" placeholder="Advanced Search..." name="searchBox" />
+            <span class="input-group-btn">
+                <button class="btn btn-info btn-sm" type="submit">
+                    <i class="glyphicon glyphicon-search"></i>
+                </button>
+            </span>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="panel panel-default" style="height: 100%;">
+            <div class="panel-heading">
+                Search By Category
+            </div>
+            <div class="panel-body">
+                <div class="form-group col-lg-12">
+                    @foreach (var i in Model)
+                    {
+                        <div class="form-check">
+                            <label class="form-check-label">
+                                <input class="form-check-input" type="radio" name="category" id="gridRadios2" value="@i.ProductCategoryName">
+                                @i.ProductCategoryName
+                            </label>
+                        </div>
+                    }
+                </div>                
+            </div>
+        </div>        
+    </div>
+
+    <div class="row">
+        <div class="panel panel-default" style="height: 100%;">
+            <div class="panel-heading">
+                Ends Before
+            </div>
+            <div class="panel-body">
+                <div class="col-lg-12">
+                    <div class='form-group input-group date' id='datetimepicker1'>
+                        <input type='text' class="form-control" name="auctionEndTime" />
+                        <span class="input-group-addon">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="panel panel-default" style="height: 100%;">
+            <div class="panel-heading">
+                Search By Price
+            </div>
+            <div class="panel-body">
+                <div class="form-group col-lg-12">
+                    Minimum price:<input type="number" class="form-control" name="minimumPrice" min="0" max="1000000" >
+                    Maximum price:<input type="number" class="form-control" name="maximumPrice" min="0" max="1000000" >
+                </div>
+            </div>
+        </div>
+    </div>
+    
+}
+
+
+
+

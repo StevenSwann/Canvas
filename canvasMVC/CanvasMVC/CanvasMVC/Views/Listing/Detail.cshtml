@@ -1,0 +1,242 @@
+﻿@using Microsoft.AspNet.Identity
+@using System.Security.Claims
+@using System.Threading
+
+@model AuctionDTOs.ListingDetailDTO
+
+@{
+    ViewBag.Title = "Listing Details";
+
+    var prinicpal = (ClaimsPrincipal)Thread.CurrentPrincipal;
+    var userId = prinicpal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).Select(c => c.Value).SingleOrDefault();
+}
+
+
+
+<h2>Listing Details</h2>
+<hr />
+<div class="container">
+    @if (TempData["BidError"] != null)
+    { 
+        if (TempData["BidError"].ToString() == "true")
+        {
+            <div class="row">
+                <div class="alert alert-danger alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Error!</strong> The bid amount must be greater or equal to the minimum.
+                </div>
+            </div>
+        }
+    }    
+    <div class="row">
+        <div class="col-md-2" style="height:150px;">
+            <img src="@Model.ImageUrl" width="150" height="150" class="img-thumbnail" style="height:inherit;" />
+        </div>
+        <div class="col-md-10">
+            <div class="row">
+                <div class="col-md-12">
+                    <h2 style="margin-top: 0px; margin-bottom: 0px;">@Model.ItemName</h2><br />
+                    Seller: @Html.ActionLink(Model.User.Username, "Detail", "User", new { id = Model.User.Id }, null) <br />
+                    Quantity: @Model.Quantity <br />
+                    Bids: @Model.Bids.Count
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-2">                    
+                    @if (Model.AuctionEndTime < System.DateTime.Now && Model.Bids.Count > 0)
+                    {
+                        <b>Final Bid:</b>
+                        <p>£@Model.Bids.Max(b => b.BidAmount)</p>
+                    }
+                    else if (Model.Bids.Count > 0)
+                    {
+                        <b>Current Bid:</b>
+                        <p>£@Model.Bids.Max(b => b.BidAmount)</p>
+                    }
+                    else
+                    {
+                        <b>Starting Price:</b>
+                        <p>£@Model.Price</p>
+                    }                                   
+                </div>
+                @if (Model.Bids.Count > 0)
+                {
+                    @Html.Action("_Bid", "Listing",  new AuctionDTOs.BidDTO() {Listing = Model,  BidAmount = Model.Bids.Max(b => b.BidAmount), User = Model.User})
+                }
+                else
+                {
+                    @Html.Action("_Bid", "Listing", new AuctionDTOs.BidDTO() { Listing = Model, BidAmount = Model.Price, User = Model.User })
+                }
+                <div class="col-md-10 pull-left">
+                    @if (Model.AuctionEndTime < System.DateTime.Now)
+                    {
+                        <input value="Auction Ended!" class="btn btn-xs btn-danger disabled" />
+                    }
+                    else if (Model.User.Id == Convert.ToInt32(userId))
+                    {
+                        <input value="Your listing!" class="btn btn-xs btn-danger disabled" />
+                    }
+                    else
+                    {
+                        
+                    }
+                </div>
+
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <b>Shipping:</b>
+                    <div class="btn-group">                        
+                        <button class="btn btn-default">
+                            Shipping Mode
+                        </button>
+                        <button data-toggle="dropdown" class="btn btn-default dropdown-toggle">
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a href="#">@Model.Shipping.ShipMode</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                   
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-12" style="margin-top: 10px;">
+            <b>Description:</b><br />
+            @Model.Description
+        </div>
+    </div>
+    <hr />
+    <div class="row">
+        <div class="col-md-12 form-actions no-color">
+            <h4>All Comments <span class="badge">@Model.Comments.Count</span></h4>
+
+            @using (Html.BeginForm("AddComment", "Listing", new { listingId = Model.Id, userId = Model.User.Id }))
+            {
+                @Html.AntiForgeryToken()
+                <div class="row">
+                    <div class="col-md-6">
+                        <textarea class="form-control" rows ="5" name="comment" id="comment" minlength="1" maxlength="120" placeholder="Add your comment here..." required></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="submit" value="Submit" class="btn btn-xs btn-success" style="margin-top:5px;" />
+                        
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+    <br />
+    <div class="row">
+        <div class="col-md-12">
+            @foreach (var comment in Model.Comments.OrderByDescending(c => c.Id))
+            {
+                <div class="row">                    
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <strong>@Html.ActionLink(comment.User.Username, "Detail", "User", new { id = comment.User.Id }, null)</strong> <span class="text-muted">commented:</span>
+                            </div>
+                            <div class="panel-body" style="padding-bottom: 0px;">
+                                <div class="col-md-2">
+                                    <div class="thumbnail" style="overflow:hidden;width:100px;height:100px;">
+                                        @if (comment.User.AvatarImage.Id > 0)
+                                        {
+                                            <img src="@Html.Raw(Url.Action("GetImg", "User", new { id = comment.User.AvatarImage.Id }))" class="img-rounded" />
+                                        }
+                                        else
+                                        {
+                                            <img src="http://sibyltech.com/wp-content/uploads/2015/01/Empty.jpg" class="img-rounded" />
+                                        }
+                                    </div>
+                                </div>
+                                <div class="col-md-10">
+                                    @comment.Content
+                                </div>
+                            </div>
+                            @if (User.Identity.Name == comment.User.Username)
+                            {
+                                <div class="panel-footer" style="height: 43px;">
+                                    @using (Html.BeginForm("DeleteComment", "Listing", new { commentId = comment.Id, listingId = comment.Listing.Id }))
+                                    {
+                                        @Html.AntiForgeryToken()
+                                        <div class="form-actions no-color form-inline" style="float:right;margin-left:5px;">
+                                            <input type="submit" value="Delete Comment" class="btn btn-xs btn-danger" />
+                                        </div>
+                                    }
+                                    <div class="form-actions no-color form-inline" style="float:right; margin-left:5px;">
+                                        <input type="submit" id="edit-comment-button" value="Edit Comment" class="btn btn-xs btn-warning" data-toggle="modal" data-target="#commentModal" data-content="@comment.Content" />
+                                    </div>
+
+                                    <div id="commentModal" class="modal fade" role="dialog">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                                    <h4 class="modal-title">Edit Comment</h4>
+                                                </div>
+                                                <div class="modal-body">
+                                                    @using (Html.BeginForm("EditComment", "Listing", new { commentId = comment.Id, listingId = comment.Listing.Id }))
+                                                    {
+                                                        @Html.AntiForgeryToken()
+                                                        <div class="row">
+                                                            <div class="col-lg-6">
+                                                                <textarea name="comment" id="comment" minlength="1" maxlength="120" style="margin: 0px; width: 350px; height: 100px;" placeholder="Edit your comment here..." required></textarea><br />
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <input type="submit" value="Edit" class="btn btn-sm btn-success" style="margin-top:5px;" />
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                                </div>
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Model.Comments.Count == 0)
+            {
+                <div class="media well">
+                    No comments.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section scripts {
+<script type="text/javascript">
+    $('#commentModal').on('show.bs.modal', function (event) {
+        var button = $(event.relatedTarget) // Button that triggered the modal
+        var message = button.data('content') // Extract info from data-* attributes
+        // If necessary, you could initiate an AJAX request here (and then do the updating in a callback).
+        // Update the modal's content. We'll use jQuery here, but you could use a data binding library or other methods instead.
+        var modal = $(this)
+        modal.find('.modal-body textarea').val(message)
+    })
+</script>
+
+}

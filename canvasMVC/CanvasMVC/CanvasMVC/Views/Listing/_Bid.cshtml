@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNet.Identity
+@using System.Security.Claims
+@using System.Threading
+
+@model AuctionDTOs.BidDTO
+
+@{
+    var min = Model.BidAmount;
+    var prinicpal = (ClaimsPrincipal)Thread.CurrentPrincipal;
+    var userId = prinicpal.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).Select(c => c.Value).SingleOrDefault();
+}
+
+
+@if (Model.Listing.AuctionEndTime < System.DateTime.Now)
+{
+    
+}
+else if (Model.User.Id == Convert.ToInt32(userId))
+{
+    
+}
+else
+{
+    using (Html.BeginForm("Bid", "Listing", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+    {
+        @Html.AntiForgeryToken()
+        <div class="col-md-2">
+            <b>Your Bid:</b>
+            @Html.TextBoxFor(model => model.BidAmount, new { @class = "form-control col-sm-1 input-group-sm", @max = "10000000", @min = (min + 0.50M), @type = "number", @value = (min + 0.50M), @step=0.01M })
+            @Html.HiddenFor(model => model.Listing.Id)
+            @Html.HiddenFor(model => model.Listing.AuctionEndTime)
+        </div>
+
+        <div class="col-md-1 pull-left btn">
+            <input type="submit" value="Bid" class="btn btn-md btn-success" />
+            @Html.ValidationSummary("", new { @class = "text-danger" })
+        </div>
+    }
+}
+
+

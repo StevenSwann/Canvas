@@ -1,0 +1,70 @@
+﻿@model IEnumerable<AuctionDTOs.BidDTO>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Item Name</th>
+                <th>Seller</th>
+                <th>Auction End Date</th>
+                <th>Your Final Bid</th>
+                <th>Result</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Count() > 0)
+            {
+                var result = Model.GroupBy(r => r.Listing.Id);
+                List<AuctionDTOs.BidDTO> bids = new List<AuctionDTOs.BidDTO>();
+
+                foreach (var group in result)
+                {
+                    var maxBid = Model.Where(x => x.BidAmount == Model.Where(z => z.Listing.Id == group.Key).Max(y => y.BidAmount));
+                    bids.Add(maxBid.First());
+                }
+
+                List<AuctionDTOs.BidDTO> finishedBids = bids.OrderByDescending(o => o.Listing.AuctionEndTime).ToList();
+
+                if (finishedBids.Count > 0)
+                {
+                    foreach (var bid in finishedBids)
+                    {
+                        <tr>
+                            <td>@bid.Listing.ItemName</td>
+                            <td>@Html.ActionLink(bid.Listing.User.Username, "Detail", "User", new { id = bid.Listing.User.Id }, null)</td>
+                            <td>@bid.Listing.AuctionEndTime</td>
+                            <td>£@bid.BidAmount</td>
+                            @if (bid.Listing.Bids.Max(b => b.BidAmount) == Model.Where(x => x.BidAmount == Model.Where(z => z.Listing.Id == bid.Listing.Id).Max(o => o.BidAmount)).Max(y => y.BidAmount))
+                            {
+                                <td style="color:green;" class="Won">Won!</td>
+                            }
+                            else
+                            {
+                                <td style="color:red;" class="Lost">Lost!</td>
+                            }
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td>
+                            No bids have ended yet.
+                        </td>
+                    </tr>
+                }
+
+
+            }
+            else
+            {
+                <tr>
+                    <td>
+                        You haven't made any bids yet.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+

@@ -1,0 +1,36 @@
+﻿#example .demo-container {
+    width: 400px;
+}
+#example.background-blackmetrotouch .demo-container,
+#example.background-metrotouch .demo-container {
+    width: 435px;
+}
+ 
+.horizontalSliderView .RadSlider {
+    margin-top: 70px;
+}
+ 
+.horizontalSliderView .ItemsSlider {
+    margin-top: 10px;
+}
+ 
+.horizontalSliderView .TicksSlider {
+    margin-top: 60px;
+}
+ 
+.verticalSliderView .RadSlider {
+    float: left;
+    margin-left: 44px;
+    margin-top: 0px;
+}
+ 
+.verticalSliderView .TicksSlider {
+    margin-left: 45px;
+}
+ 
+.verticalSliderView .RadSlider_BlackMetroTouch {
+    margin-left: 46px;
+}
+.verticalSliderView .TicksSlider.RadSlider_BlackMetroTouch {
+    margin-left: 18px;
+}

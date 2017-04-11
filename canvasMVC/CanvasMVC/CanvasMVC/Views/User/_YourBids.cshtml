@@ -1,0 +1,88 @@
+﻿@model IEnumerable<AuctionDTOs.BidDTO>
+
+<link href="~/Content/PagedList.css" rel="stylesheet" type="text/css" />
+
+<div class="row hidden-xs hidden-sm" style="margin-bottom:5px;text-align:center;">
+    <div class="col-md-1">
+        
+    </div>
+    <div class="col-md-4">
+        <strong>Item Name</strong>
+    </div>
+    <div class="col-md-4">
+        <strong>Time Remaining</strong>
+    </div>
+    <div class="col-md-1">
+        <strong>Bid</strong>
+    </div>
+    <div class="col-md-2">
+        <strong>Result</strong>
+    </div>
+</div>
+
+
+
+        @if (Model.Count() > 0)
+        {
+            var result = Model.GroupBy(r => r.Listing.Id);
+            List<AuctionDTOs.BidDTO> bids = new List<AuctionDTOs.BidDTO>();
+
+            foreach (var group in result)
+            {
+                var maxBid = Model.Where(x => x.BidAmount == Model.Where(z => z.Listing.Id == group.Key).Max(y => y.BidAmount));
+                bids.Add(maxBid.First());
+            }
+
+            ViewBag.BidNumber = bids.Count;
+
+
+            foreach (var bid in bids.OrderBy(o => o.Listing.AuctionEndTime))
+            {
+                <div class="alert alert-info BidRow" style="margin-bottom:5px;text-align:center;">
+                    <div class="row">
+                        <div class="col-md-1">
+                            <img src="@bid.Listing.ImageUrl" width="50" height="50" />
+                        </div>
+                        <div class="col-md-4">
+                            @Html.ActionLink(bid.Listing.ItemName, "Detail", "Listing", new { id = bid.Listing.Id }, null)
+                        </div>
+                        <div class="col-md-4">
+                            @if (bid.Listing.AuctionEndTime < System.DateTime.Now)
+                            {
+                                <b style="color:red;">Auction has ended!</b>
+                            }
+                            else
+                            {
+                                <p>Time Remaining: @bid.Listing.AuctionEndTime.Subtract(System.DateTime.Now).Days d @bid.Listing.AuctionEndTime.Subtract(System.DateTime.Now).Hours hr @bid.Listing.AuctionEndTime.Subtract(System.DateTime.Now).Minutes min</p>
+                            }
+                        </div>
+                        <div class="col-md-1">
+                            <p>£@bid.BidAmount</p>
+                        </div>
+                        <div class="col-md-2 result">
+                            @if (bid.Listing.AuctionEndTime < System.DateTime.Now)
+                            {
+                                if (bid.Listing.Bids.Max(b => b.BidAmount) == Model.Where(x => x.BidAmount == Model.Where(z => z.Listing.Id == bid.Listing.Id).Max(o => o.BidAmount)).Max(y => y.BidAmount))
+                                {
+                                    <b style="color:green;" class="Won">Won!</b>
+                                    <a href="#" onclick='navigate("/User/DismissBid", @bid.Id, @bid.Listing.Id, @bid.User.Id);' class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                                    
+                                }
+                                else
+                                {
+                                    <b style="color:red;" class="Lost">Lost!</b>
+                                    <a href="#" onclick='navigate("/User/DismissBid", @bid.Id, @bid.Listing.Id, @bid.User.Id);' class="close" data-dismiss="alert" aria-label="close">&times;</a>
+
+
+                                }
+                            }
+                            else
+                            {
+                                <p style="color:grey">Ongoing...</p>
+                            }
+                        </div>
+                    </div>
+                </div>              
+            }
+        }
+

@@ -1,0 +1,19 @@
+To add packages, use the Package Manager Console located at Tools->NuGet Package Manager and paste the commands below.
+
+Packages for AuctionPOCOs:
+-------------------------------------------------------------------
+Install-Package EntityFramework
+-------------------------------------------------------------------
+
+Packages for AuctionRepos:
+-------------------------------------------------------------------
+Install-Package EntityFramework
+-------------------------------------------------------------------
+
+Packages for UnitTests:
+-------------------------------------------------------------------
+install-package nunit –version 2.6.4
+install-package nunittestadapter
+install-package moq
+install-package entityframework.moqhelper
+-------------------------------------------------------------------
