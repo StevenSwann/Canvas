@@ -20,6 +20,36 @@
     }
 }
 
+@if (TempData["AccountCreated"] != null)
+{
+    if (TempData["AccountCreated"].ToString() == "true")
+    {
+        <div class="container-fluid">
+            <div class="row">
+                <div class="alert alert-success alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Registered Successfully!</strong> Please enter your log in details below.
+                </div>
+            </div>
+        </div>
+    }
+}
+
+@if (TempData["PasswordChanged"] != null)
+{
+    if (TempData["PasswordChanged"].ToString() == "true")
+    {
+        <div class="container-fluid">
+            <div class="row">
+                <div class="alert alert-success alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Password Changed Successfully!</strong> Please log in again to confirm.
+                </div>
+            </div>
+        </div>
+    }
+}
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <h2>@ViewBag.Title</h2>

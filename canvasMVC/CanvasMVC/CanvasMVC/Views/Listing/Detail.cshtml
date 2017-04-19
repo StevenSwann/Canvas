@@ -27,7 +27,22 @@
                 </div>
             </div>
         }
-    }    
+    } 
+    @if (Model.Bids.Count > 0)
+    {
+        if (userId != null)
+        {
+            if (Model.Bids.Where(b => b.BidAmount == Model.Bids.Max(max => max.BidAmount)).Select(b => b.User).FirstOrDefault().Id == Int32.Parse(userId))
+            {
+                <div class="row">
+                    <div class="alert alert-success alert-dismissable fade in">
+                        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                        <strong><span class="glyphicon glyphicon-star" aria-hidden="true"></span></strong> You are currently winning this auction!
+                    </div>
+                </div>
+            }
+        }
+    }     
     <div class="row">
         <div class="col-md-2" style="height:150px;">
             <img src="@Model.ImageUrl" width="150" height="150" class="img-thumbnail" style="height:inherit;" />
@@ -82,7 +97,8 @@
                     }
                 </div>
 
-            </div>
+            </div>          
+            
             <div class="row">
                 <div class="col-md-12">
                     <b>Shipping:</b>

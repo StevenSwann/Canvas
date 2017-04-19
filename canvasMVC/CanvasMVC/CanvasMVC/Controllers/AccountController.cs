@@ -202,10 +202,12 @@ namespace CanvasMVC.Controllers
 
                 if (result.StatusCode == HttpStatusCode.Conflict)
                 {
-                    return RedirectToAction("AlreadyExists", "Account");
+                    TempData["RegisterErrorExists"] = "true";
+                    return View(model);
                 }
                 if (result.StatusCode == HttpStatusCode.Created)
-                {                    
+                {
+                    TempData["AccountCreated"] = "true";
                     return RedirectToAction("Login", "Account");
                 }
                 else

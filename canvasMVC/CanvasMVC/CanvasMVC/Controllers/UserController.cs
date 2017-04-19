@@ -180,7 +180,8 @@ namespace CanvasMVC.Controllers
             if (result.StatusCode == HttpStatusCode.OK)
             {
                 HttpContext.GetOwinContext().Authentication.SignOut(DefaultAuthenticationTypes.ApplicationCookie);
-                return RedirectToAction("Index", "Home");
+                TempData["PasswordChanged"] = "true";
+                return RedirectToAction("Login", "Account");
             }
             if (result.StatusCode == HttpStatusCode.Unauthorized)
             {

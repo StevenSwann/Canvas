@@ -3,6 +3,21 @@
     ViewBag.Title = "Register";
 }
 
+@if (TempData["RegisterErrorExists"] != null)
+{
+    if (TempData["RegisterErrorExists"].ToString() == "true")
+    {
+        <div class="container-fluid">
+            <div class="row">
+                <div class="alert alert-danger alert-dismissable fade in">
+                    <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                    <strong>Error!</strong> Username and/or E-mail address already registered!
+                </div>
+            </div>
+        </div>
+    }
+}
+
 <div class="panel panel-default">
     <div class="panel-heading">
         <h2>@ViewBag.Title</h2>

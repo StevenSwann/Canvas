@@ -31,9 +31,54 @@ else
             @Html.HiddenFor(model => model.Listing.AuctionEndTime)
         </div>
 
-        <div class="col-md-1 pull-left btn">
-            <input type="submit" value="Bid" class="btn btn-md btn-success" />
-            @Html.ValidationSummary("", new { @class = "text-danger" })
+        <div class="col-md-1 pull-left">
+            @if (Model.Listing.Bids.Count > 0)
+            {
+                if (userId != null)
+                {
+                    if (Model.Listing.Bids.Where(b => b.BidAmount == Model.Listing.Bids.Max(max => max.BidAmount)).Select(b => b.User).FirstOrDefault().Id == Int32.Parse(userId))
+                    {
+                        <input type="button" id="bid-button" value="Bid" class="btn btn-md btn-success" data-toggle="modal" data-target="#bidModal" />
+
+                        <div id="bidModal" class="modal fade" role="dialog">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h4 class="modal-title">Are you sure?</h4>
+                                    </div>
+                                    <div class="modal-body">
+                                        You are <strong>already</strong> the highest bidder on this listing!<br />
+                                        Are you sure you would like to make another bid? 
+                                    </div>
+                                    <div class="modal-footer">
+                                        <input type="submit" value="Bid" class="btn btn-md btn-success" />
+                                        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <input type="submit" value="Bid" class="btn btn-md btn-success" />
+                        @Html.ValidationSummary("", new { @class = "text-danger" })
+                    }
+                }
+                else
+                {
+                    <input type="submit" value="Bid" class="btn btn-md btn-success" />
+                    @Html.ValidationSummary("", new { @class = "text-danger" })
+                }
+            }
+            else
+            {
+                <input type="submit" value="Bid" class="btn btn-md btn-success" />
+                @Html.ValidationSummary("", new { @class = "text-danger" })
+            }     
+        </div>
+        <div class="col-md-1">
+
         </div>
     }
 }
